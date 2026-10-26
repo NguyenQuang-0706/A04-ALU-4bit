@@ -1,0 +1,48 @@
+VCD info: dumpfile a04_waves.vcd opened for output.
+==============================================================
+A04 - ALU 4-bit tam chuc nang - TESTBENCH TU KIEM
+==============================================================
+
+[PHA 1] 24 ca bat buoc cua Charter muc 8 (8 phep x 3 cap)
+  TC-001   ADD A= 0 B= 0 -> result= 0 C=0 Z=1  PASS
+  TC-002   ADD A= 5 B= 3 -> result= 8 C=0 Z=0  PASS
+  TC-003   ADD A= 9 B= 7 -> result= 0 C=1 Z=1  PASS
+  TC-004   SUB A= 5 B= 3 -> result= 2 C=1 Z=0  PASS
+  TC-005   SUB A= 3 B= 5 -> result=14 C=0 Z=0  PASS
+  TC-006   SUB A= 7 B= 7 -> result= 0 C=1 Z=1  PASS
+  TC-007   AND A=12 B=10 -> result= 8 C=0 Z=0  PASS
+  TC-008   AND A=15 B= 0 -> result= 0 C=0 Z=1  PASS
+  TC-009   AND A=15 B=15 -> result=15 C=0 Z=0  PASS
+  TC-010   OR  A=12 B=10 -> result=14 C=0 Z=0  PASS
+  TC-011   OR  A= 0 B= 0 -> result= 0 C=0 Z=1  PASS
+  TC-012   OR  A= 8 B= 1 -> result= 9 C=0 Z=0  PASS
+  TC-013   XOR A=12 B=10 -> result= 6 C=0 Z=0  PASS
+  TC-014   XOR A= 5 B= 5 -> result= 0 C=0 Z=1  PASS
+  TC-015   XOR A=15 B= 0 -> result=15 C=0 Z=0  PASS
+  TC-016   NOT A= 0 B= 0 -> result=15 C=0 Z=0  PASS
+  TC-017   NOT A=15 B= 9 -> result= 0 C=0 Z=1  PASS
+  TC-018   NOT A=10 B= 5 -> result= 5 C=0 Z=0  PASS
+  TC-019   SHL A= 1 B= 0 -> result= 2 C=0 Z=0  PASS
+  TC-020   SHL A= 8 B= 0 -> result= 0 C=1 Z=1  PASS
+  TC-021   SHL A=15 B= 0 -> result=14 C=1 Z=0  PASS
+  TC-022   SHR A= 2 B= 0 -> result= 1 C=0 Z=0  PASS
+  TC-023   SHR A= 1 B= 0 -> result= 0 C=1 Z=1  PASS
+  TC-024   SHR A=15 B= 0 -> result= 7 C=1 Z=0  PASS
+
+[PHA 2] 6 ca tu xay dung (Charter doi >= 2, co ca bien)
+  TC-025   SUB A= 0 B= 1 -> result=15 C=0 Z=0  PASS
+  TC-026   ADD A=15 B=15 -> result=14 C=1 Z=0  PASS
+  TC-027   ADD A=15 B= 1 -> result= 0 C=1 Z=1  PASS
+  TC-028   ADD A=10 B= 5 -> result=15 C=0 Z=0  PASS
+  TC-029   SHL A= 0 B= 0 -> result= 0 C=0 Z=1  PASS
+  TC-030   SUB A= 8 B= 8 -> result= 0 C=1 Z=1  PASS
+
+[PHA 3] Quet vet can toan bo khong gian dau vao (16 x 16 x 8 = 2048)
+  Quet vet can: 2048/2048 to hop khop mo hinh chuan.
+
+==============================================================
+TONG KET: chay=2078  lech REF=0  vi pham bat bien=0  (Z=1: 222 vector)
+          ca co ten=30 (24 bat buoc + 6 tu xay dung), vet can=2048
+A04 exhaustive validation PASS - DUT khop REF tren toan bo khong gian dau vao.
+==============================================================
+05_VERIFICATION/testbench/a04_tb.sv:305: $finish called at 2596000 (1ps)

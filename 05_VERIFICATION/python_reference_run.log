@@ -1,0 +1,66 @@
+==========================================================================
+A04 - MO HINH CHUAN PYTHON - ALU 4-bit tam chuc nang
+==========================================================================
+[1] CA CO TEN - 24 ca Charter muc 8 + 6 ca tu xay dung
+    TC-001   ADD A= 0 B= 0 -> result= 0 C=0 Z=1  PASS  nho nhat ca hai toan hang; Z=1 khong qua tran
+    TC-002   ADD A= 5 B= 3 -> result= 8 C=0 Z=0  PASS  giua dai, khong sinh carry ra
+    TC-003   ADD A= 9 B= 7 -> result= 0 C=1 Z=1  PASS  9+7=16: C=1 va Z=1 CUNG LUC
+    TC-004   SUB A= 5 B= 3 -> result= 2 C=1 Z=0  PASS  tru khong muon -> chot quy uoc C=1 la KHONG muon
+    TC-005   SUB A= 3 B= 5 -> result=14 C=0 Z=0  PASS  tru CO muon - phan chung cua TC-004
+    TC-006   SUB A= 7 B= 7 -> result= 0 C=1 Z=1  PASS  tru hai so bang nhau; carry-in lan het 4 tang
+    TC-007   AND A=12 B=10 -> result= 8 C=0 Z=0  PASS  1100 & 1010 - mau bit lo loi noi lech bit
+    TC-008   AND A=15 B= 0 -> result= 0 C=0 Z=1  PASS  phan tu triet tieu cua AND
+    TC-009   AND A=15 B=15 -> result=15 C=0 Z=0  PASS  phan tu don vi - du lieu di qua nguyen ven
+    TC-010   OR  A=12 B=10 -> result=14 C=0 Z=0  PASS  cung cap toan hang voi TC-007 va TC-013
+    TC-011   OR  A= 0 B= 0 -> result= 0 C=0 Z=1  PASS  ca DUY NHAT trong 256 cap cho Z=1 voi phep OR
+    TC-012   OR  A= 8 B= 1 -> result= 9 C=0 Z=0  PASS  hai bit o hai dau tu - khong bit nao bi nuot
+    TC-013   XOR A=12 B=10 -> result= 6 C=0 Z=0  PASS  cung cap voi TC-007 / TC-010
+    TC-014   XOR A= 5 B= 5 -> result= 0 C=0 Z=1  PASS  x XOR x = 0 - tinh chat dac trung cua XOR
+    TC-015   XOR A=15 B= 0 -> result=15 C=0 Z=0  PASS  XOR voi 0 la phep dong nhat
+    TC-016   NOT A= 0 B= 0 -> result=15 C=0 Z=0  PASS  dao toan bo tu
+    TC-017   NOT A=15 B= 9 -> result= 0 C=0 Z=1  PASS  B=9 khac 0: bat loi de B lot vao nhanh NOT
+    TC-018   NOT A=10 B= 5 -> result= 5 C=0 Z=0  PASS  bay nguoc: B=5 TRUNG ket qua dung, can TC-017 bu
+    TC-019   SHL A= 1 B= 0 -> result= 2 C=0 Z=0  PASS  dich trai khong mat bit
+    TC-020   SHL A= 8 B= 0 -> result= 0 C=1 Z=1  PASS  1000<<1: bit duy nhat roi ra C, ket qua rong
+    TC-021   SHL A=15 B= 0 -> result=14 C=1 Z=0  PASS  dich trai toan 1 - kiem bit 0 duoc chen dung
+    TC-022   SHR A= 2 B= 0 -> result= 1 C=0 Z=0  PASS  dich phai khong mat bit
+    TC-023   SHR A= 1 B= 0 -> result= 0 C=1 Z=1  PASS  doi xung voi TC-020 o phia phai
+    TC-024   SHR A=15 B= 0 -> result= 7 C=1 Z=0  PASS  dich phai LOGIC: bit cao phai la 0, khong nhan ban dau
+    TC-025   SUB A= 0 B= 1 -> result=15 C=0 Z=0  PASS  CA BIEN: 0-1, bien duoi tuyet doi cua phep tru
+    TC-026   ADD A=15 B=15 -> result=14 C=1 Z=0  PASS  CA BIEN: moi tang TU SINH carry -> khong phai lan
+    TC-027   ADD A=15 B= 1 -> result= 0 C=1 Z=1  PASS  CA BIEN: carry sinh o bit 0 roi lan het 3 tang
+    TC-028   ADD A=10 B= 5 -> result=15 C=0 Z=0  PASS  ca NHANH NHAT: khong tang nao sinh carry
+    TC-029   SHL A= 0 B= 0 -> result= 0 C=0 Z=1  PASS  CA BIEN: ca duy nhat nhom dich co Z=1 ma C=0
+    TC-030   SUB A= 8 B= 8 -> result= 0 C=1 Z=1  PASS  CA BIEN: chuoi carry DAI NHAT toan ALU (4 tang)
+
+[2] BAT BIEN INV-1..INV-7 tren toan bo 2048 to hop (16 x 16 x 8)
+    INV-1  PASS  ADD: {C, result} == A + B
+    INV-2  PASS  SUB: result == (A-B) mod 16 va C == (A >= B)
+    INV-3  PASS  Z == (result == 0) cho ca TAM phep
+    INV-4  PASS  AND/OR/XOR/NOT luon cho C == 0
+    INV-5  PASS  dich 1 bit: bit bi day ra luon xuat hien o C
+    INV-6  PASS  NOT la phep mot ngoi: ket qua khong phu thuoc B
+    INV-7  PASS  A + (~B) + 1 == A - B va carry ra == (A >= B)
+    (INV-7 la bat bien BIEN MINH cho kien truc 'mot bo cong dung chung')
+
+[3] SO LIEU DOI CHIEU VOI corner_cases.md muc 4.2
+    So to hop (A,B) cho Z=1, tinh tren 256 cap cua TUNG phep:
+      ADD :  16/256
+      SUB :  16/256
+      AND :  81/256
+      OR  :   1/256
+      XOR :  16/256
+      NOT :  16/256
+      SHL :  32/256
+      SHR :  32/256
+    Tong tren toan khong gian 2048 to hop: 210 vector co Z=1
+    => Phep OR la phep KHO kiem co Z nhat: chi 1/256 to hop.
+       Mot bo kiem NGAU NHIEN 100 vector bo sot ca do voi xac suat 68%.
+       Day la ly do cu the, do duoc, giai thich vi sao de nay
+       PHAI quet vet can chu khong kiem ngau nhien.
+    Bao phu cap co (C,Z): [(0, 0), (0, 1), (1, 0), (1, 1)] -> 4/4 to hop deu xay ra
+
+==========================================================================
+TONG KET: 37 phep kiem, 0 loi, quet vet can 2048/2048 to hop
+A04 reference model PASS
+==========================================================================

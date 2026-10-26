@@ -1,0 +1,9 @@
+# LibreLane intermediate runs (keep local, do not upload)
+04_IMPLEMENTATION/scripts/runs/
+
+# Temporary simulation executable
+05_VERIFICATION/sim.vvp
+
+# Python cache
+__pycache__/
+*.pyc

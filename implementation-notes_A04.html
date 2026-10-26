@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A04 — Đơn vị số học logic (ALU) 4-bit tám chức năng · Ghi chú thực hiện</title>
+<style>
+:root{
+  --bg:#ffffff; --fg:#1a1d21; --muted:#5c6570; --line:#e3e7eb;
+  --accent:#1f5fa9; --accent-soft:#eef4fb; --code-bg:#f5f7f9;
+  --ok:#137a4d; --ok-bg:#e8f6ee; --warn:#8a5a00; --warn-bg:#fdf4e2;
+  --bad:#a52020; --bad-bg:#fceded; --open:#7a5ba8; --open-bg:#f3eefa;
+  --maxw:960px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+    --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+    --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+    --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15181c; --fg:#e6e9ec; --muted:#98a2ad; --line:#2a2f36;
+  --accent:#6fa8e0; --accent-soft:#1c2733; --code-bg:#1b1f24;
+  --ok:#5cc08d; --ok-bg:#16291f; --warn:#d8a54a; --warn-bg:#2a2314;
+  --bad:#e88b8b; --bad-bg:#2b1a1a; --open:#b79ad6; --open-bg:#241d2e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:16px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px 96px}
+header.doc{
+  border-bottom:1px solid var(--line); margin-bottom:28px; padding:36px 0 22px;
+}
+header.doc .eyebrow{
+  font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--muted); font-weight:600; margin-bottom:10px;
+}
+header.doc h1{font-size:clamp(24px,4.4vw,34px); line-height:1.25; margin:0 0 14px}
+.badges{display:flex; flex-wrap:wrap; gap:7px; margin-top:6px}
+.badge{
+  font-size:12.5px; padding:3px 10px; border-radius:999px;
+  border:1px solid var(--line); color:var(--muted); background:var(--accent-soft);
+  white-space:nowrap;
+}
+.badge.ok{color:var(--ok); background:var(--ok-bg); border-color:transparent}
+.badge.warn{color:var(--warn); background:var(--warn-bg); border-color:transparent}
+.badge.bad{color:var(--bad); background:var(--bad-bg); border-color:transparent}
+.badge.open{color:var(--open); background:var(--open-bg); border-color:transparent}
+nav.toc{
+  border:1px solid var(--line); border-radius:10px; padding:16px 20px;
+  margin:0 0 32px; background:var(--accent-soft);
+}
+nav.toc p{margin:0 0 8px; font-weight:700; font-size:13px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted)}
+nav.toc ul{margin:0; padding-left:20px}
+nav.toc li{margin:3px 0}
+nav.toc a{color:var(--fg); text-decoration:none}
+nav.toc a:hover{color:var(--accent); text-decoration:underline}
+nav.toc ul ul{padding-left:18px; font-size:14.5px}
+h2{font-size:22px; margin:40px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line)}
+h3{font-size:18px; margin:28px 0 8px}
+h4{font-size:16px; margin:22px 0 6px; color:var(--muted)}
+p{margin:12px 0}
+a{color:var(--accent)}
+ul,ol{padding-left:24px}
+li{margin:4px 0}
+code{
+  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  font-size:.9em; background:var(--code-bg); padding:1.5px 5px; border-radius:4px;
+}
+pre{
+  background:var(--code-bg); border:1px solid var(--line); border-radius:8px;
+  padding:14px 16px; overflow-x:auto; line-height:1.55; font-size:13.5px;
+}
+pre code{background:none; padding:0; font-size:inherit}
+blockquote{
+  margin:16px 0; padding:2px 18px; border-left:3px solid var(--accent);
+  background:var(--accent-soft); border-radius:0 8px 8px 0; color:var(--fg);
+}
+blockquote p{margin:10px 0}
+.tablewrap{overflow-x:auto; margin:16px 0; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:420px}
+th,td{border:1px solid var(--line); padding:7px 11px; text-align:left; vertical-align:top}
+th{background:var(--accent-soft); font-weight:650; white-space:nowrap}
+tbody tr:nth-child(even) td{background:color-mix(in srgb, var(--code-bg) 55%, transparent)}
+hr{border:0; border-top:1px solid var(--line); margin:34px 0}
+footer.doc{
+  margin-top:56px; padding-top:18px; border-top:1px solid var(--line);
+  color:var(--muted); font-size:13.5px;
+}
+.themebtn{
+  position:fixed; right:14px; bottom:14px; z-index:10;
+  border:1px solid var(--line); background:var(--bg); color:var(--muted);
+  border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer;
+}
+.themebtn:hover{color:var(--fg)}
+@media (max-width:640px){
+  .wrap{padding:0 16px 72px}
+  header.doc{padding:26px 0 18px}
+  nav.toc{padding:14px 16px}
+}
+@media print{
+  .themebtn{display:none}
+  nav.toc{break-inside:avoid}
+  pre,table,blockquote{break-inside:avoid}
+  body{font-size:11pt}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="doc">
+  <div class="eyebrow">RTL2GDS · Đề A04 · Ghi chú thực hiện</div>
+  <h1>A04 — Đơn vị số học logic (ALU) 4-bit tám chức năng · Ghi chú thực hiện</h1>
+  <div class="badges"><span class="badge ">🔧 Đã thiết kế lại đúng đề</span><span class="badge ">A · Số học tổ hợp</span><span class="badge ">Độ khó: Trung bình</span><span class="badge ">Loại mạch: Tổ hợp</span><span class="badge ok">Mô phỏng: PASS</span><span class="badge ">Tổng hợp: 64 cell · 0 FF</span><span class="badge ">Đường tới hạn: 1,85 ns</span><span class="badge warn">Physical design: CHƯA CHẠY</span></div>
+</header>
+<nav class="toc"><p>Mục lục</p><ul><li><a href="#1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</a></li><li><a href="#2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</a></li><ul><li><a href="#2-1-kien-truc-tinh-het-roi-moi-chon">2.1 Kiến trúc &quot;tính hết rồi mới chọn&quot;</a></li><li><a href="#2-2-mot-bo-cong-hai-phep">2.2 Một bộ cộng, hai phép</a></li><li><a href="#2-3-y-nghia-cua-c-doi-theo-phep">2.3 Ý nghĩa của C đổi theo phép</a></li></ul><li><a href="#3-doc-ma-nguon-rtl-lam-gi">3. Đọc mã nguồn: RTL làm gì</a></li><ul><li><a href="#dieu-tuyet-doi-khong-duoc-viet">Điều tuyệt đối không được viết</a></li></ul><li><a href="#4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</a></li><li><a href="#5-cach-thuc-hien-lo-trinh-8-buoc">5. Cách thực hiện — lộ trình 8 bước</a></li><li><a href="#6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</a></li><ul><li><a href="#tung-con-so-chung-minh-gi-va-khong-chung-minh-gi">Từng con số chứng minh gì — và KHÔNG chứng minh gì</a></li></ul><li><a href="#7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</a></li><ul><li><a href="#cau-1-tam-phep-dung-chung-phan-cung-nao-va-phan-nao-phai-rieng-cho-moi-phep">Câu 1 — Tám phép dùng chung phần cứng nào, và phần nào phải riêng cho mỗi phép?</a></li><li><a href="#cau-2-ba-bit-chon-phep-di-vao-dau-trong-netlist-va-tao-ra-bao-nhieu-bo-ghep-kenh">Câu 2 — Ba bit chọn phép đi vào đâu trong netlist, và tạo ra bao nhiêu bộ ghép kênh?</a></li><li><a href="#cau-3-phep-nao-la-duong-toi-han-cua-ca-alu-va-vi-sao">Câu 3 — Phép nào là đường tới hạn của cả ALU, và vì sao?</a></li></ul><li><a href="#8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</a></li><ul><li><a href="#cach-do">Cách đo</a></li><li><a href="#ket-qua">Kết quả</a></li><li><a href="#ba-ket-qua-dang-noi">Ba kết quả đáng nói</a></li><li><a href="#ban-ve-chi-phi-cua-tinh-linh-hoat">Bàn về chi phí của tính linh hoạt</a></li></ul><li><a href="#9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</a></li><li><a href="#10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</a></li><li><a href="#11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</a></li><ul><li><a href="#da-chung-minh">Đã chứng minh</a></li><li><a href="#chua-chung-minh">Chưa chứng minh</a></li><li><a href="#ngoai-pham-vi-khong-duoc-khang-dinh">Ngoài phạm vi — không được khẳng định</a></li></ul></ul></nav>
+<main>
+<hr>
+<h2 id="1-bai-toan-nay-thuc-chat-la-gi">1. Bài toán này thực chất là gì</h2>
+<p>Bề mặt: "làm tám phép trên bốn bit". Nghe như tám bài tập nhỏ ghép lại.</p>
+<p>Thực chất, Charter chọn A04 để dạy một điều mà bộ cộng A01 không dạy được:
+<strong>phần cứng để <em>chọn</em> có thể đắt hơn phần cứng để <em>tính</em>.</strong></p>
+<p>Câu hỏi riêng của đề (Charter mục 9) nói thẳng ra điều đó: <em>"ước lượng phần diện tích dành
+cho bộ ghép kênh chọn phép so với phần diện tích dành cho các phép tính. Bàn về chi phí của
+tính linh hoạt."</em> Toàn bộ hồ sơ này tồn tại để biến câu hỏi đó thành một <strong>số đo</strong>, và câu
+trả lời đo được là:</p>
+<blockquote>
+<p><strong>Bộ ghép kênh chiếm 46,4 % diện tích. Tám phép tính cộng lại chiếm 51,8 %.</strong>
+Cứ 1 µm² để tính, phải trả thêm 0,90 µm² chỉ để chọn xem đang tính gì.</p>
+</blockquote>
+<p>Bối cảnh ứng dụng — vi điều khiển 4 bit dạy học — không phải trang trí. Nó quyết định vì
+sao "tính hết rồi chọn" là kiến trúc đúng ở đây: mỗi lệnh phải xong trong <strong>một</strong> chu kỳ,
+nên không được phép lặp; và vì chỉ có 4 bit nên chuỗi carry còn quá ngắn để trở thành nút
+thắt.</p>
+<blockquote>
+<p>⚠️ <strong>Lưu ý truy vết:</strong> gói nguồn ban đầu của đề này chứa một <strong>bộ mã hoá ưu tiên 8→3</strong>
+của một danh mục đề cũ, không phải ALU. RTL trong <code>04_IMPLEMENTATION/</code> là <strong>bản viết
+mới cho đúng đề Charter</strong>; bản gốc đóng băng tại <code>08_ORIGINAL_SOURCE/</code>. Chẩn đoán đầy
+đủ: <code>05_VERIFICATION/known_issues.md</code> §1.</p>
+</blockquote>
+<h2 id="2-ban-chat-ky-thuat-co-che-hoat-dong">2. Bản chất kỹ thuật — cơ chế hoạt động</h2>
+<h3 id="2-1-kien-truc-tinh-het-roi-moi-chon">2.1 Kiến trúc "tính hết rồi mới chọn"</h3>
+<p>Tám nhánh chức năng <strong>luôn luôn tính</strong>, kể cả nhánh không được chọn:</p>
+<pre><code>   a, b  ──▶  ADD/SUB   AND   OR   XOR   NOT   SHL   SHR      (8 kết quả, 40 bit)
+                 │       │     │    │     │     │     │
+   op    ──────▶ └───────┴─────┴────┴─────┴─────┴─────┘
+                          bộ ghép kênh 8 → 1
+                                 │
+                        result[3:0], C   ──▶  Z = NOR(result)
+</code></pre>
+<p>Đây không phải lãng phí — đó là <strong>cách duy nhất</strong> để mọi phép cùng xong trong một lần lan
+truyền. Cái giá là công suất động: mỗi lần <code>op</code> đổi, cả tám nhánh đều chuyển mạch.</p>
+<h3 id="2-2-mot-bo-cong-hai-phep">2.2 Một bộ cộng, hai phép</h3>
+<p>Điểm trọng tâm khi bảo vệ. Phép trừ <strong>không có</strong> mạch riêng:</p>
+<pre><code>   A − B  =  A + (−B)  =  A + (¬B + 1)  =  A + ¬B + 1
+                              │            │
+                    4 cổng XOR trên B      carry-in = 1
+</code></pre>
+<p>Trong RTL, cả hai "nửa" gói gọn trong hai dòng:</p>
+<pre><code class="language-systemverilog">assign b_eff    = b ^ {4{sub}};   // nửa đầu: đảo bit khi trừ  — 4 cổng XOR
+assign carry[0] = sub;            // nửa sau: cộng thêm 1      — 0 cổng, chỉ là dây
+</code></pre>
+<p>Điều đáng nói là <strong>nửa sau hoàn toàn miễn phí</strong>: carry-in của tầng 0 vốn là một dây tự do
+của bộ cộng, chỉ cần nối <code>sub</code> vào đó.</p>
+<h3 id="2-3-y-nghia-cua-c-doi-theo-phep">2.3 Ý nghĩa của <code>C</code> đổi theo phép</h3>
+<p>Cùng một dây <code>carry[4]</code>, hai cách đọc:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;"><code>sub</code></th>
+<th><code>C = 1</code> nghĩa là</th>
+<th>Firmware dùng để</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0 (ADD)</td>
+<td><code>A + B ≥ 16</code> — <strong>tràn không dấu</strong></td>
+<td>Mở rộng nhiều nibble</td>
+</tr>
+<tr>
+<td style="text-align: center;">1 (SUB)</td>
+<td><code>A ≥ B</code> — <strong>không mượn</strong></td>
+<td>So sánh, rẽ nhánh</td>
+</tr>
+</tbody>
+</table></div>
+<p>Đây là quy ước kiểu ARM/6502. Nó được chọn vì nó <strong>rơi ra miễn phí</strong> từ bộ cộng dùng
+chung; quy ước x86 (<code>C = 1</code> ⟺ <strong>có</strong> mượn) sẽ phải trả thêm một cổng đảo <strong>nằm trên đường
+tới hạn</strong>.</p>
+<h2 id="3-doc-ma-nguon-rtl-lam-gi">3. Đọc mã nguồn: RTL làm gì</h2>
+<p>Toàn bộ kiến trúc nằm trong sáu mục của <code>a04_alu4.sv</code>. Ba đoạn cần giảng kỹ:</p>
+<p><strong>① Bộ cộng dùng chung — chuỗi ripple tường minh</strong></p>
+<pre><code class="language-systemverilog">assign b_eff    = b ^ {4{sub}};
+assign carry[0] = sub;
+
+genvar i;
+generate
+    for (i = 0; i &lt; 4; i = i + 1) begin : GEN_FA
+        assign r_arith[i] = a[i] ^ b_eff[i] ^ carry[i];
+        assign carry[i+1] = (a[i] &amp; b_eff[i])
+                          | (a[i] &amp; carry[i])
+                          | (b_eff[i] &amp; carry[i]);
+    end
+endgenerate
+</code></pre>
+<ul>
+<li><code>generate for</code> là <strong>nhân bản KHÔNG GIAN</strong>: bốn bản sao phần cứng tồn tại đồng thời,
+  không phải bốn lần chạy tuần tự. Sinh viên quen lập trình phần mềm gần như luôn hiểu
+  nhầm chỗ này.</li>
+<li><code>carry[i+1]</code> là <strong>hàm đa số (majority)</strong> của ba bit. Nhận ra điều này giải thích vì sao
+  netlist có cell <code>maj3_1</code>.</li>
+<li><code>b_eff</code> là toàn bộ chi phí riêng của phép trừ: <strong>4 cổng XOR</strong>.</li>
+</ul>
+<p><strong>② Hai nhánh dịch không tốn một cổng nào</strong></p>
+<pre><code class="language-systemverilog">assign r_shl = {a[2:0], 1'b0};   // KHÔNG viết a &lt;&lt; 1
+assign c_shl = a[3];
+assign r_shr = {1'b0, a[3:1]};   // KHÔNG viết a &gt;&gt; 1
+assign c_shr = a[0];
+</code></pre>
+<p>Dịch <strong>một bit cố định</strong> là nối dây thuần. Tổng hợp riêng module này cho <strong>0 cell</strong>. Viết
+bằng phép ghép bit làm điều đó hiển nhiên; viết <code>a &lt;&lt; 1</code> lại gợi ý một bộ dịch có thể tham
+số hoá — thứ A04 không có, và Charter mục 3 xếp vào ngoài phạm vi.</p>
+<p><strong>③ Bộ ghép kênh — và chi tiết dễ bỏ qua nhất của cả bài</strong></p>
+<pre><code class="language-systemverilog">always_comb begin
+    result = 4'b0000;                 // lớp phòng vệ 1
+    cflag  = 1'b0;
+    case (op)
+        OP_ADD : begin result = r_arith; cflag = c_arith; end  // &lt;-- cùng
+        OP_SUB : begin result = r_arith; cflag = c_arith; end  // &lt;-- một dây
+        OP_AND : begin result = r_and;   cflag = 1'b0;    end
+        ...
+        default: begin result = 4'b0000; cflag = 1'b0;    end  // lớp phòng vệ 2
+    endcase
+end
+</code></pre>
+<p>Hai nhánh đầu lấy về <strong>cùng một dây</strong> <code>r_arith</code>. Vì thế bộ ghép kênh mang tiếng "8 vào"
+nhưng chỉ có <strong>bảy nguồn phân biệt</strong>. Với đường <code>C</code> còn ít hơn — <strong>bốn</strong> nguồn
+(<code>c_arith</code>, hằng số <code>0</code>, <code>a[3]</code>, <code>a[0]</code>). Đó là lý do vì sao "một bộ cộng dùng chung"
+tiết kiệm ở <strong>hai</strong> chỗ chứ không phải một (§7 câu 1).</p>
+<h3 id="dieu-tuyet-doi-khong-duoc-viet">Điều tuyệt đối không được viết</h3>
+<pre><code class="language-systemverilog">assign result = sub ? a - b : a + b;   // ❌ CẤM trong RTL nộp bài
+</code></pre>
+<p>Viết vậy cho công cụ tự do sinh <strong>hai</strong> mạch số học riêng — đo được là <strong>+26,4 % diện
+tích</strong> — và xoá mất đúng thứ Charter mục 2 câu 1 yêu cầu quan sát. Các toán tử <code>+</code>, <code>-</code>,
+<code>&lt;&lt;</code>, <code>&gt;&gt;</code> chỉ được dùng trong <code>05_VERIFICATION/golden_model/</code>, nơi chúng đóng vai trò
+chuẩn so sánh độc lập.</p>
+<h2 id="4-vi-sao-chon-kien-truc-nay">4. Vì sao chọn kiến trúc này</h2>
+<p>Không phải vì "tính hết rồi chọn" là tốt nhất nói chung, mà vì <strong>ứng dụng ràng buộc như vậy</strong>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Tiêu chí của vi điều khiển dạy học</th>
+<th>Kiến trúc đã chọn đáp ứng?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mỗi lệnh xong trong <strong>một</strong> chu kỳ</td>
+<td>✅ Một lần lan truyền, đo được 1,85 ns</td>
+</tr>
+<tr>
+<td>Quy mô ~200–300 cell · 1×1 tile (Charter ước lượng)</td>
+<td>✅ <strong>64 cell · 417,90 µm²</strong> — nhỏ hơn cả cận dưới</td>
+</tr>
+<tr>
+<td>Ngân sách 24 chân</td>
+<td>✅ Dùng 17/24, <strong>không có điểm mở</strong></td>
+</tr>
+<tr>
+<td>Phải <strong>đọc được</strong> để dạy</td>
+<td>✅ Tám nhánh ánh xạ 1-1 với bảng mã lệnh</td>
+</tr>
+<tr>
+<td>Cần tần số cao</td>
+<td>❌ Không cần</td>
+</tr>
+</tbody>
+</table></div>
+<p>Còn ràng buộc "một bộ cộng dùng chung" thì không phải lựa chọn — đó là <strong>yêu cầu của đề</strong>.
+Nhưng nó cũng là lựa chọn đúng, và §7 câu 1 chứng minh bằng số.</p>
+<p>So sánh đầy đủ ba kiến trúc ALU: <code>03_ARCHITECTURE/tradeoff.md</code> §4 — lưu ý phương án ALU
+lặp nằm <strong>ngoài phạm vi</strong> theo Charter mục 3 (nó đổi loại mạch sang Tuần tự).</p>
+<h2 id="5-cach-thuc-hien-lo-trinh-8-buoc">5. Cách thực hiện — lộ trình 8 bước</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Bước</th>
+<th>Công cụ</th>
+<th>Bằng chứng sinh ra</th>
+<th>Trạng thái</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Phát hiện gói nguồn lệch đề, đối chiếu bảng cổng với Charter mục 4</td>
+<td>—</td>
+<td><code>05_VERIFICATION/known_issues.md</code> §1</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Suy bảng hành vi 8 phép + 2 cờ từ Charter mục 1, 4, 8</td>
+<td>—</td>
+<td><code>02_SPECIFICATION/functional_spec.md</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Viết mô hình chuẩn Python độc lập (30 ca + 7 bất biến)</td>
+<td>CPython 3</td>
+<td><code>python_reference_run.log</code></td>
+<td>✅ PASS</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Viết RTL: 8 nhánh tường minh + mux, <strong>một</strong> bộ cộng dùng chung</td>
+<td>—</td>
+<td><code>04_IMPLEMENTATION/rtl/a04_alu4.sv</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Viết testbench tự kiểm + quét vét cạn 2 048 tổ hợp</td>
+<td>Icarus Verilog 12.0</td>
+<td><code>simulation.log</code></td>
+<td>✅ 2 078 vector / 0 lỗi</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Tổng hợp lên sky130, <strong>kiểm 0 flip-flop và 0 chốt</strong></td>
+<td>Yosys 0.33</td>
+<td><code>synth_stat.txt</code></td>
+<td>✅ 64 cell, 0 FF</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Đo tách diện tích mux / phép tính (7 biến thể) + thí nghiệm chốt (5 biến thể)</td>
+<td>Yosys 0.33</td>
+<td><code>tradeoff.md</code> §2–3, <code>known_issues.md</code> §4</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>8</td>
+<td>STA với clock ảo, tìm đường tới hạn thật</td>
+<td>OpenSTA</td>
+<td><code>06_GDSII/sta/</code></td>
+<td>✅ 1,85 ns</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Physical design RTL→GDSII</td>
+<td>LibreLane + sky130A</td>
+<td><code>06_GDSII/</code></td>
+<td>⬜ chưa chạy</td>
+</tr>
+</tbody>
+</table></div>
+<p>Chạy lại toàn bộ: <code>07_TRACEABILITY/evidence_index.md</code>.</p>
+<h2 id="6-so-lieu-that-da-do-duoc-va-cach-doc-chung">6. Số liệu thật đã đo được và cách đọc chúng</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Chỉ số</th>
+<th style="text-align: right;">Giá trị</th>
+<th>Công cụ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vector kiểm chứng</td>
+<td style="text-align: right;">2 078 chạy · <strong>0 lệch REF</strong></td>
+<td>Icarus Verilog 12.0</td>
+</tr>
+<tr>
+<td>Quét vét cạn</td>
+<td style="text-align: right;"><strong>2 048/2 048</strong> tổ hợp khớp</td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Vi phạm bất biến</td>
+<td style="text-align: right;"><strong>0 / 2 078</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Số cell</td>
+<td style="text-align: right;"><strong>64</strong></td>
+<td>Yosys 0.33 + sky130_fd_sc_hd</td>
+</tr>
+<tr>
+<td><strong>Flip-flop</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td><strong>Chốt (latch)</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Diện tích</td>
+<td style="text-align: right;"><strong>417,9008 µm²</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>— trong đó tám phép tính</td>
+<td style="text-align: right;">216,4576 µm² (51,8 %)</td>
+<td>như trên, biến thể V-FUNC</td>
+</tr>
+<tr>
+<td>— trong đó bộ ghép kênh</td>
+<td style="text-align: right;"><strong>193,9360 µm² (46,4 %)</strong></td>
+<td>như trên, biến thể V-SEL</td>
+</tr>
+<tr>
+<td>— trong đó cờ <code>Z</code></td>
+<td style="text-align: right;">6,2560 µm² (1,5 %)</td>
+<td>như trên, biến thể V-FLAGZ</td>
+</tr>
+<tr>
+<td>Đường tới hạn</td>
+<td style="text-align: right;"><strong><code>op[2] → zflag</code></strong></td>
+<td>OpenSTA</td>
+</tr>
+<tr>
+<td><strong>Độ trễ tổ hợp</strong></td>
+<td style="text-align: right;"><strong>1,85 ns</strong> (slack 8,15 ns)</td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>WNS / TNS</td>
+<td style="text-align: right;">0,00 / 0,00</td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Đường dữ liệu chậm nhất</td>
+<td style="text-align: right;"><code>b[1] → zflag</code>, 1,36 ns</td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Chuỗi carry 4 tầng đầy đủ</td>
+<td style="text-align: right;"><code>a[0] → cflag</code>, <strong>1,04 ns</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Đường nhanh nhất</td>
+<td style="text-align: right;"><code>a[1] → result[2]</code>, <strong>0,10 ns</strong></td>
+<td>như trên</td>
+</tr>
+<tr>
+<td>Công suất</td>
+<td style="text-align: right;"><strong>1,56e-05 W</strong> — 100,0 % tổ hợp, 0,0 % tuần tự</td>
+<td>như trên</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="tung-con-so-chung-minh-gi-va-khong-chung-minh-gi">Từng con số chứng minh gì — và KHÔNG chứng minh gì</h3>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Con số</th>
+<th><strong>Chứng minh</strong></th>
+<th><strong>KHÔNG chứng minh</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2 048/2 048 khớp</td>
+<td>Hàm của DUT <strong>tương đương</strong> golden model. Không còn ca hành vi nào chưa kiểm.</td>
+<td>Kiến trúc là "8 nhánh + 1 bộ cộng dùng chung". Một ALU viết bằng <code>a+b</code>/<code>a-b</code> cũng PASS hết.</td>
+</tr>
+<tr>
+<td>0 flip-flop, 0 chốt</td>
+<td>Đúng phân loại Tổ hợp của Charter, xác nhận bởi <strong>hai nguồn độc lập</strong> (bảng cell + công suất nhóm Sequential = 0 %)</td>
+<td>Netlist tương đương RTL về chức năng — cần mô phỏng gate-level</td>
+</tr>
+<tr>
+<td>64 cell · 417,90 µm²</td>
+<td>ALU này <strong>nhỏ</strong> — dưới cả cận dưới 200 cell của ước lượng Charter</td>
+<td>Diện tích sau P&amp;R — sẽ khác vì có dây</td>
+</tr>
+<tr>
+<td>46,4 % cho mux</td>
+<td>Chi phí của tính linh hoạt, <strong>đo bằng ba lần tổng hợp riêng biệt cộng lại lệch 0,3 % so với thiết kế thật</strong></td>
+<td>Tỉ lệ này ở độ rộng từ khác — ở 8 hay 16 bit, phần "phép tính" tăng nhanh hơn phần "chọn"</td>
+</tr>
+<tr>
+<td>1,85 ns</td>
+<td>Độ trễ <strong>ở mức sau tổng hợp</strong>, góc <code>tt_025C_1v80</code></td>
+<td>Độ trễ thật sau routing (sẽ <strong>lớn hơn</strong>, chưa có RC dây)</td>
+</tr>
+<tr>
+<td>1,56e-05 W</td>
+<td>Thứ tự độ lớn công suất</td>
+<td>Công suất thật — dùng activity mặc định, không lấy từ VCD</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="7-tra-loi-cac-cau-hoi-ky-thuat-cua-charter-muc-2">7. Trả lời các câu hỏi kỹ thuật của Charter (mục 2)</h2>
+<h3 id="cau-1-tam-phep-dung-chung-phan-cung-nao-va-phan-nao-phai-rieng-cho-moi-phep">Câu 1 — Tám phép dùng chung phần cứng nào, và phần nào phải riêng cho mỗi phép?</h3>
+<p><strong>Dùng chung ba thứ:</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Dùng chung</th>
+<th>Phục vụ</th>
+<th>Bằng chứng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Một bộ cộng ripple 4 tầng</strong></td>
+<td>ADD <strong>và</strong> SUB</td>
+<td>RTL chỉ có <strong>một</strong> khối <code>generate GEN_FA</code> và <strong>một</strong> mảng <code>carry[4:0]</code>. Bằng chứng định lượng: tổng hợp biến thể hai bộ riêng (V-TWO) cho 27 cell / 186,4288 µm², so với 14 cell / 128,8736 µm² của bản dùng chung</td>
+</tr>
+<tr>
+<td><strong>Một bộ ghép kênh 8→1</strong></td>
+<td>Cả tám phép</td>
+<td>Mục 5 của RTL</td>
+</tr>
+<tr>
+<td><strong>Một cây NOR sinh <code>Z</code></strong></td>
+<td>Cả tám phép</td>
+<td>Mục 6 của RTL, đặt <strong>sau</strong> mux</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Riêng cho từng phép:</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Phép</th>
+<th>Phần cứng riêng</th>
+<th>Chi phí đo được</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SUB</td>
+<td>4 cổng XOR (<code>b_eff</code>) + 1 cổng giải mã <code>sub</code></td>
+<td><strong>+1 cell, +33,78 µm²</strong> so với bộ cộng thuần</td>
+</tr>
+<tr>
+<td>AND, OR, XOR, NOT</td>
+<td>4 cổng mỗi phép</td>
+<td>16 cell · 100,0960 µm² cho <strong>cả sáu</strong> nhánh logic + dịch</td>
+</tr>
+<tr>
+<td>SHL, SHR</td>
+<td><strong>0 cổng</strong> — nối dây thuần</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ADD</td>
+<td><strong>0 cổng riêng</strong> — là hành vi mặc định của bộ cộng khi <code>sub = 0</code></td>
+<td>0</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Con số quan trọng nhất của câu này:</strong> làm hai đơn vị số học riêng thay vì dùng chung sẽ
+tốn thêm <strong>153,8976 µm² — 26,4 % diện tích cả ALU</strong>, và phần tăng đó chia làm hai:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Nơi tăng</th>
+<th style="text-align: right;">Tăng</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bộ số học (2 chuỗi carry thay vì 1)</td>
+<td style="text-align: right;">+57,5552 µm²</td>
+</tr>
+<tr>
+<td><strong>Bộ ghép kênh</strong> (8 nguồn phân biệt thay vì 7)</td>
+<td style="text-align: right;"><strong>+96,3424 µm²</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Phần tăng ở <strong>bộ ghép kênh lớn hơn</strong> phần tăng ở chính bộ số học. Đây là chỗ sinh viên
+hay bỏ sót khi trả lời câu này.</p>
+<h3 id="cau-2-ba-bit-chon-phep-di-vao-dau-trong-netlist-va-tao-ra-bao-nhieu-bo-ghep-kenh">Câu 2 — Ba bit chọn phép đi vào đâu trong netlist, và tạo ra bao nhiêu bộ ghép kênh?</h3>
+<p><strong><code>op</code> chạm vào netlist ở đúng hai điểm:</strong></p>
+<ol>
+<li><strong>Bộ giải mã <code>sub = (op == 3'b001)</code></strong> — một cổng, hiện thực thành <code>nor3b_1</code>. Điểm này
+   nằm <strong>trong</strong> đường dữ liệu số học: <code>sub</code> điều khiển cả 4 cổng XOR của <code>b_eff</code> <strong>và</strong>
+   <code>carry[0]</code>.</li>
+<li><strong>Bộ ghép kênh chọn phép</strong> — nằm cuối đường dữ liệu.</li>
+</ol>
+<p><strong>Số bộ ghép kênh 8→1 sinh ra: 5.</strong> Bốn cho <code>result[3:0]</code>, một cho <code>cflag</code>. Không có bộ
+ghép kênh nào cho <code>zflag</code>, vì <code>zflag</code> được tính <strong>sau</strong> mux (xem <code>control.md</code> §4).</p>
+<p>Nhưng "5 bộ ghép kênh 8→1" là cách nói của <strong>RTL</strong>, không phải của <strong>netlist</strong>. Netlist
+thật không có cell <code>mux8</code>; <code>abc</code> đã hoà tan chúng thành 27 cell thuộc họ AOI/OAI
+(<code>a2111oi_0</code>, <code>o2111ai_1</code>, <code>a22oi_1</code>, <code>nand4b_1</code>, …). Đây là bài học chung: <strong>đếm cấu
+trúc trong RTL, đo diện tích trong netlist — đừng trộn hai việc đó.</strong></p>
+<p>Diện tích thật của toàn bộ phần này: <strong>27 cell · 193,9360 µm² = 46,4 %</strong> tổng diện tích.</p>
+<h3 id="cau-3-phep-nao-la-duong-toi-han-cua-ca-alu-va-vi-sao">Câu 3 — Phép nào là đường tới hạn của cả ALU, và vì sao?</h3>
+<p><strong>Câu trả lời đo được đi ngược lại cách đặt câu hỏi: đường tới hạn không thuộc về "phép
+nào" cả.</strong></p>
+<p>Đường tới hạn là <code>op[2] → zflag</code>, <strong>1,85 ns</strong>:</p>
+<pre><code> op[2] ─▶ nor3b_1   0,43 ns   ← GIẢI MÃ `sub` (cell ĐẮT NHẤT trên cả đường)
+       ─▶ xor2_1    0,26 ns   ← b_eff = b ⊕ sub
+       ─▶ xor3_1    0,33 ns   ← một tầng tổng của bộ cộng
+       ─▶ a2111oi_0 0,52 ns   ┐
+       ─▶ o2111ai_1 0,18 ns   ├─ bộ ghép kênh + cây NOR sinh Z
+       ─▶ a211oi_1  0,13 ns   ┘
+       ═▶ zflag                 tổng 1,85 ns
+</code></pre>
+<p><strong>Cả sáu đường chậm nhất của khối đều xuất phát từ <code>op</code>, không một đường nào từ <code>a</code> hay
+<code>b</code>.</strong> Ba lý do, theo thứ tự quan trọng:</p>
+<ol>
+<li><strong><code>sub</code> đứng TRƯỚC bộ cộng.</strong> Vì cộng và trừ dùng chung một bộ cộng, mã lệnh phải được
+   giải mã <strong>xong</strong> thì bộ cộng mới bắt đầu. Toán hạng <code>a</code>, <code>b</code> thì vào thẳng — chúng bỏ
+   qua bước này.</li>
+<li><strong><code>op[2]</code> có fanout 11</strong> — cao nhất thiết kế (nó vào cả bộ giải mã lẫn cả năm bộ ghép
+   kênh). Slew xấu, nên cell đầu tiên tiêu 0,43 ns, bằng <strong>23 %</strong> cả đường.</li>
+<li><strong><code>zflag</code> nằm sau mux</strong>, nên nó là endpoint sâu nhất.</li>
+</ol>
+<p>Đối chứng trên <strong>cùng một netlist</strong>:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Đường</th>
+<th>Nội dung</th>
+<th style="text-align: right;">Độ trễ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>a[1] → result[2]</code></td>
+<td>nhánh dịch — 0 cổng logic</td>
+<td style="text-align: right;"><strong>0,10 ns</strong></td>
+</tr>
+<tr>
+<td><code>a[0] → cflag</code></td>
+<td>đi hết <strong>cả 4 tầng carry</strong></td>
+<td style="text-align: right;"><strong>1,04 ns</strong></td>
+</tr>
+<tr>
+<td><code>b[1] → zflag</code></td>
+<td>đường dữ liệu chậm nhất</td>
+<td style="text-align: right;">1,36 ns</td>
+</tr>
+<tr>
+<td><strong><code>op[2] → zflag</code></strong></td>
+<td><strong>đường tới hạn</strong></td>
+<td style="text-align: right;"><strong>1,85 ns</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Chuỗi carry 4 tầng — thứ mà trực giác từ A01 bảo phải là nút thắt — chỉ chiếm <strong>56 %</strong>
+đường tới hạn. <strong>Ở <code>N = 4</code> bit, chuỗi ripple còn quá ngắn để cạnh tranh với chi phí chọn
+phép.</strong> Ở A01 với <code>N = 8</code> thì ngược lại. Độ rộng từ quyết định ai là nút thắt.</p>
+<h2 id="8-tra-loi-cau-phan-tich-rieng-charter-muc-9">8. Trả lời câu phân tích riêng (Charter mục 9)</h2>
+<blockquote>
+<p><em>"Từ báo cáo tổng hợp, ước lượng phần diện tích dành cho bộ ghép kênh chọn phép so với
+phần diện tích dành cho các phép tính. Bàn về chi phí của tính linh hoạt."</em></p>
+</blockquote>
+<h3 id="cach-do">Cách đo</h3>
+<p><code>stat</code> cho <strong>một</strong> con số tổng cho cả module, không nói phần nào là mux. Nên phải tổng hợp
+nhiều phiên bản — cùng thư viện, cùng script, chỉ đổi <code>-top</code> — rồi so. Ba biến thể chính
+được chép <strong>nguyên văn</strong> từ các mục tương ứng của RTL nộp bài:</p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Biến thể</th>
+<th>Nội dung</th>
+<th style="text-align: right;">Cell</th>
+<th style="text-align: right;">Diện tích</th>
+<th style="text-align: right;">Tỉ lệ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>V-FUNC</strong></td>
+<td>Tám nhánh chức năng, <strong>không</strong> mux</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;"><strong>216,4576 µm²</strong></td>
+<td style="text-align: right;"><strong>51,8 %</strong></td>
+</tr>
+<tr>
+<td><strong>V-SEL</strong></td>
+<td>Giải mã <code>sub</code> + bộ ghép kênh 8→1 rộng 5 bit</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;"><strong>193,9360 µm²</strong></td>
+<td style="text-align: right;"><strong>46,4 %</strong></td>
+</tr>
+<tr>
+<td><strong>V-FLAGZ</strong></td>
+<td>Cây NOR sinh <code>Z</code></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">6,2560 µm²</td>
+<td style="text-align: right;">1,5 %</td>
+</tr>
+<tr>
+<td><em>Tổng ba phần</em></td>
+<td></td>
+<td style="text-align: right;"><em>58</em></td>
+<td style="text-align: right;"><em>416,6496 µm²</em></td>
+<td style="text-align: right;"><em>99,7 %</em></td>
+</tr>
+<tr>
+<td><strong>A04 thật</strong></td>
+<td>tổng hợp một lượt</td>
+<td style="text-align: right;"><strong>64</strong></td>
+<td style="text-align: right;"><strong>417,9008 µm²</strong></td>
+<td style="text-align: right;"><strong>100 %</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Tổng ba phần rời chỉ lệch <strong>0,3 %</strong> so với thiết kế thật ⟹ phép tách là <strong>hợp lệ</strong>, ba
+phần gần như không chồng lấn.</p>
+<h3 id="ket-qua">Kết quả</h3>
+<blockquote>
+<p><strong>Bộ ghép kênh chọn phép: 193,9360 µm² / 417,9008 µm² = 46,4 %.</strong>
+<strong>Tám phép tính: 216,4576 µm² = 51,8 %.</strong>
+Tỉ số <strong>chọn : tính ≈ 0,90 : 1</strong>.</p>
+</blockquote>
+<h3 id="ba-ket-qua-dang-noi">Ba kết quả đáng nói</h3>
+<p><strong>① Bộ ghép kênh đắt hơn bộ cộng 50 %, và đắt gần gấp đôi cả sáu nhánh logic + dịch cộng lại.</strong></p>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>Phần</th>
+<th style="text-align: right;">Cell</th>
+<th style="text-align: right;">Diện tích</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bộ cộng/trừ dùng chung — nhánh <strong>đắt nhất</strong> trong tám nhánh</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">128,8736 µm²</td>
+</tr>
+<tr>
+<td>Bốn nhánh logic + hai nhánh dịch <strong>cộng lại</strong></td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">100,0960 µm²</td>
+</tr>
+<tr>
+<td><strong>Bộ ghép kênh</strong></td>
+<td style="text-align: right;"><strong>27</strong></td>
+<td style="text-align: right;"><strong>193,9360 µm²</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>② Nhánh rẻ nhất lại làm bộ ghép kênh đắt nhất.</strong> Hai nhánh dịch tốn <strong>0 cell</strong> — tổng
+hợp riêng cho đúng 0 cổng, vì dịch 1 bit cố định là nối dây. Nhưng chúng vẫn chiếm
+<strong>2 trên 8</strong> đường vào của bộ ghép kênh. Chúng "miễn phí khi tính" nhưng <strong>phải trả tiền
+khi chọn</strong>. Đây là hệ quả trực tiếp của việc chi phí chọn tỉ lệ với <strong>số phép</strong>, còn chi
+phí tính tỉ lệ với <strong>độ phức tạp từng phép</strong> — hai đại lượng độc lập nhau.</p>
+<p><strong>③ Tính linh hoạt tốn cả tốc độ, không chỉ diện tích.</strong> Đường tới hạn <code>op[2] → zflag</code>
+(1,85 ns) dài hơn <strong>78 %</strong> so với đường đi hết chuỗi carry 4 tầng <code>a[0] → cflag</code>
+(1,04 ns). Cell đắt nhất trên đường tới hạn là <strong>bộ giải mã <code>sub</code></strong> (0,43 ns) — tức là
+một cell thuần "chọn", không tính gì cả.</p>
+<h3 id="ban-ve-chi-phi-cua-tinh-linh-hoat">Bàn về chi phí của tính linh hoạt</h3>
+<p>Một ALU 4-bit tám chức năng <strong>về bản chất</strong> là một khối mà gần một nửa diện tích không
+dùng để tính. Ba hệ quả thiết kế rút ra từ số liệu này:</p>
+<ol>
+<li><strong>Thêm phép thứ 9 rẻ hơn ta tưởng ở nhánh, đắt hơn ta tưởng ở mux.</strong> Một phép logic mới
+   tốn ~4 cổng ở nhánh, nhưng làm mux rộng thêm một đường vào × 5 bit. Ở quy mô 4 bit, vế
+   thứ hai lớn hơn.</li>
+<li><strong>Càng rộng từ, tỉ lệ này càng có lợi cho tính linh hoạt.</strong> Diện tích nhánh số học tăng
+   theo <code>O(N)</code>, còn diện tích mux cũng tăng theo <code>O(N)</code> nhưng với hệ số nhỏ hơn nhiều — và
+   số phép thì không đổi. Con số 46,4 % là con số của <strong>4 bit</strong>, không được suy ra cho 8
+   hay 16 bit.</li>
+<li><strong>Cách rẻ nhất để giảm chi phí chọn là làm cho các nhánh dùng chung nguồn.</strong> Đó chính
+   là điều mà ràng buộc "một bộ cộng dùng chung" của đề làm được: nó biến mux 8 nguồn
+   thành mux 7 nguồn, tiết kiệm <strong>96,3424 µm² (−33,2 %)</strong> ở riêng bộ ghép kênh.</li>
+</ol>
+<h2 id="9-nhung-cho-sinh-vien-hay-sai-va-cach-phat-hien">9. Những chỗ sinh viên hay sai và cách phát hiện</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Sai lầm</th>
+<th>Hậu quả</th>
+<th>Phát hiện bằng bằng chứng nào</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Viết <code>result = sub ? a - b : a + b</code> cho gọn</td>
+<td>Sinh <strong>hai</strong> mạch số học riêng; +26,4 % diện tích; mất đúng thứ mục 2 câu 1 cần quan sát</td>
+<td>Đọc RTL; netlist có <strong>hai</strong> chuỗi carry, số cell <code>maj3</code>/<code>a22oi</code> tăng gấp đôi</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Quên nhánh <code>default</code> <strong>và</strong> quên gán mặc định</td>
+<td>Chốt xuất hiện trong mạch tổ hợp</td>
+<td><code>synth_stat.txt</code> có <code>$_DLATCH_*</code>; với <code>always_comb</code> thì Yosys <strong>dừng hẳn</strong> (xem #3)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Dùng <code>always @(*)</code> thay cho <code>always_comb</code></td>
+<td>Lỗi trên <strong>im lặng lọt qua</strong>, và diện tích báo cáo còn <strong>sai</strong></td>
+<td><code>known_issues.md</code> §4: S3 cho ERROR, S4 cho 5 chốt + dòng <code>Area for cell type $_DLATCH_N_ is unknown!</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Tin rằng <code>default</code> là thứ cứu mình</td>
+<td>Bỏ gán mặc định vì "đã có default"</td>
+<td>Đo: bỏ riêng <code>default</code> (S5) vẫn 0 chốt; bỏ riêng gán mặc định (S1) cũng 0 chốt. Phải mất <strong>cả hai</strong> mới sinh chốt — và cả hai đều <strong>miễn phí</strong> (S0/S1/S5 đều 27 cell · 193,9360 µm²)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Nghĩ đường tới hạn phải là chuỗi carry</td>
+<td>Chọn sai vector đo timing, tối ưu sai chỗ</td>
+<td>STA: <code>a[0] → cflag</code> chỉ 1,04 ns, trong khi <code>op[2] → zflag</code> 1,85 ns</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Nhầm <code>C</code> sau phép trừ là cờ "mượn"</td>
+<td>Firmware so sánh sai dấu</td>
+<td>TC-004 (<code>5−3</code>, <code>C=1</code>) và TC-005 (<code>3−5</code>, <code>C=0</code>) — cặp phản chứng</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Để <code>B</code> lọt vào nhánh <code>NOT</code></td>
+<td>Phép một ngôi biến thành hai ngôi</td>
+<td>TC-017 (<code>¬15</code> với <code>B=9</code>); lưu ý TC-018 một mình <strong>không</strong> bắt được lỗi này</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Viết <code>a &lt;&lt; 1</code> cho nhánh dịch</td>
+<td>Gợi ý bộ dịch tham số hoá; mất tính hiển nhiên "0 cổng"</td>
+<td>Tổng hợp riêng nhánh dịch: phải ra <strong>0 cell</strong></td>
+</tr>
+<tr>
+<td>9</td>
+<td>Nghĩ <code>15+15</code> là ca chậm nhất vì "toàn số 1"</td>
+<td>Chọn sai vector</td>
+<td><code>corner_cases.md</code> §4.1: <code>15+15</code> có <code>GGGG</code> ⟹ <strong>0 tầng lan</strong>. Ca dài nhất là <code>8−8</code> với <code>PPPP</code> ⟹ <strong>4 tầng</strong></td>
+</tr>
+<tr>
+<td>10</td>
+<td>Kết luận "mô phỏng PASS ⟹ kiến trúc đúng"</td>
+<td>Kiểm chứng chức năng mù về cấu trúc</td>
+<td>Một ALU viết bằng <code>a+b</code>/<code>a-b</code> cũng PASS 2 048/2 048</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Đếm "5 bộ ghép kênh 8→1" rồi tra diện tích mux8 trong liberty</td>
+<td>Sai số lớn</td>
+<td>Netlist <strong>không có</strong> cell mux8 nào; <code>abc</code> hoà tan thành 27 cell họ AOI/OAI</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Diễn giải "period 10 ns" thành "chạy ở 100 MHz"</td>
+<td>Khẳng định vượt mức</td>
+<td><code>02_SPECIFICATION/timing.md</code> — <code>vclk</code> là mốc quy chiếu, A04 không có clock</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Dùng waveform RTL để chứng minh độ trễ</td>
+<td>Waveform hành vi là zero-delay</td>
+<td>Mở VCD: mọi tín hiệu đổi tức thời tại <code>#1</code></td>
+</tr>
+<tr>
+<td>14</td>
+<td>So số cell của A04 với đề khác</td>
+<td>Hai đề có thể chạy môi trường khác</td>
+<td><code>02_SPECIFICATION/parameters.md</code> — điều kiện tạo bằng chứng</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="10-cau-hoi-mentor-nen-dat-khi-bao-ve">10. Câu hỏi mentor nên đặt khi bảo vệ</h2>
+<div class="tablewrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Câu hỏi</th>
+<th>Đáp án mong đợi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Chỉ cho tôi thấy <strong>chỗ nào</strong> trong RTL nói rằng cộng và trừ dùng chung một bộ cộng.</td>
+<td>Chỉ vào khối <code>generate GEN_FA</code> — chỉ có <strong>một</strong> khối; và hai dòng <code>b_eff = b ^ {4{sub}}</code> với <code>carry[0] = sub</code>. Nếu có hai bộ cộng thì phải có hai khối <code>generate</code> hoặc hai chuỗi <code>carry</code>.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Phép trừ tốn thêm bao nhiêu so với một bộ cộng thuần?</td>
+<td><strong>+1 cell, +33,78 µm²</strong> (13 → 14 cell; 95,0912 → 128,8736 µm²). Làm hai đơn vị riêng thì tốn +14 cell / +91,34 µm² — đắt gấp gần 2,7 lần.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Vì sao bộ ghép kênh "8 vào" lại chỉ có 7 nguồn?</td>
+<td>Vì nhánh ADD và nhánh SUB <strong>là cùng một dây</strong> <code>r_arith</code>. Đo được: mux 7 nguồn 193,9360 µm² so với mux 8 nguồn 290,2784 µm² — chênh <strong>33,2 %</strong>.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>C</code> sau phép <code>SUB 3−5</code> bằng mấy? Vì sao?</td>
+<td>Bằng <strong>0</strong>. A04 dùng quy ước "carry = không mượn": <code>C = 1</code> ⟺ <code>A ≥ B</code>. Đây là carry-out của <code>A + ¬B + 1</code>, lấy thẳng, không đảo — nên miễn phí.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Đường tới hạn của khối là phép nào?</td>
+<td><strong>Không phải phép nào cả</strong> — nó là <code>op[2] → zflag</code>, 1,85 ns, xuất phát từ <strong>bit chọn phép</strong>. Cell đầu tiên là bộ giải mã <code>sub</code>, tốn 0,43 ns = 23 % cả đường.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Chuỗi carry 4 tầng có phải nút thắt không?</td>
+<td><strong>Không.</strong> <code>a[0] → cflag</code> đi hết 4 tầng chỉ mất 1,04 ns — bằng 56 % đường tới hạn. Ở <code>N = 4</code> chuỗi ripple còn quá ngắn. Ở A01 (<code>N = 8</code>) thì ngược lại.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Bộ ghép kênh tốn bao nhiêu phần diện tích? Đo thế nào?</td>
+<td><strong>46,4 %</strong> (193,9360 / 417,9008 µm²). Đo bằng cách tổng hợp riêng ba phần (V-FUNC / V-SEL / V-FLAGZ) cùng thư viện cùng script; tổng ba phần lệch thiết kế thật chỉ <strong>0,3 %</strong>.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Nhánh nào tốn nhiều cell nhất? Nhánh nào tốn ít nhất?</td>
+<td>Nhiều nhất: bộ cộng/trừ (14 cell). Ít nhất: <strong>hai nhánh dịch — 0 cell</strong>, vì dịch 1 bit cố định là nối dây thuần.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Vì sao khối này có đúng 0 flip-flop?</td>
+<td>Vì là mạch tổ hợp: đầu ra chỉ là hàm của <code>(a, b, op)</code> hiện tại. <code>ACC</code>, <code>IR</code>, <code>FLAGS</code> đều nằm <strong>ngoài</strong> A04.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Tám phép nghe như tám trạng thái — sao lại nói không có FSM?</td>
+<td>Tám giá trị của <code>op</code> là <strong>tám nhãn trên dây chọn</strong>, không phải tám trạng thái được nhớ. ALU tính <strong>cả tám</strong> phép cùng lúc, mọi lúc; kết quả không phụ thuộc phép trước đó.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Nếu quên nhánh <code>default</code> thì sao?</td>
+<td>Chưa chắc sao cả — đã đo: bỏ riêng <code>default</code> (S5) vẫn <strong>0 chốt</strong> vì gán mặc định đã phủ, và bỏ riêng gán mặc định (S1) cũng vậy. Phải mất <strong>cả hai</strong> mới sinh chốt. Cả hai lớp đều miễn phí: S0/S1/S5 đều cho 27 cell · 193,9360 µm². Khi mất cả hai thì <code>always_comb</code> cho <strong>ERROR dừng hẳn</strong>, còn <code>always @(*)</code> cho <strong>5 chốt lọt qua âm thầm</strong>.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Vì sao <code>zflag</code> chậm hơn <code>cflag</code>?</td>
+<td>Vì <code>zflag</code> tính <strong>sau</strong> bộ ghép kênh (1 cây NOR thay vì 8). Đo được: 1,85 ns so với 1,35 ns — đổi <strong>+0,50 ns</strong> lấy <strong>−73,82 µm²</strong>.</td>
+</tr>
+<tr>
+<td>13</td>
+<td>2 048/2 048 PASS — chứng minh kiến trúc đúng chưa?</td>
+<td>Chưa. Kiểm chứng chức năng <strong>mù về cấu trúc</strong>. Một ALU viết bằng <code>a+b</code>/<code>a-b</code> cũng PASS hết. Bằng chứng kiến trúc phải đọc từ RTL và netlist.</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Con số 1,85 ns có phải độ trễ thật của chip không?</td>
+<td>Không. Đây là độ trễ <strong>sau tổng hợp</strong>, chưa có RC dây, chỉ một góc PVT. Sau routing sẽ lớn hơn.</td>
+</tr>
+<tr>
+<td>15</td>
+<td>Vấn đề ngân sách chân giải quyết ra sao?</td>
+<td><strong>Không có vấn đề</strong> — 17/24 chân, Charter mục 4 ghi rõ "ánh xạ đã khả thi, không phải đổi gì". Còn dư 7 chân.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="11-gioi-han-da-chung-minh-duoc-gi-chua-chung-minh-duoc-gi">11. Giới hạn: đã chứng minh được gì, chưa chứng minh được gì</h2>
+<h3 id="da-chung-minh">Đã chứng minh</h3>
+<ol>
+<li>Hàm của A04 đúng trên <strong>toàn bộ</strong> không gian đầu vào (2 048/2 048, 0 lệch).</li>
+<li>Chín bất biến của đặc tả luôn giữ (0 vi phạm / 2 078 vector), kể cả <strong>INV-7</strong> — đồng
+   nhất thức bù 2 mà kiến trúc "một bộ cộng dùng chung" dựa vào.</li>
+<li>Ba hiện thực độc lập (Python, SV reference, RTL) đồng ý với nhau.</li>
+<li><strong>0 ô nhớ</strong> — xác nhận bởi hai bằng chứng độc lập (bảng cell + báo cáo công suất).</li>
+<li>ALU này <strong>nhỏ</strong>: 64 cell · 417,9008 µm², dưới cả cận dưới 200 cell của ước lượng Charter.</li>
+<li><strong>Bộ ghép kênh chọn phép chiếm 46,4 % diện tích</strong>, tám phép tính chiếm 51,8 % — đo bằng
+   ba lần tổng hợp riêng, tổng lại lệch thiết kế thật 0,3 %.</li>
+<li><strong>Một bộ cộng dùng chung tiết kiệm 26,4 % diện tích cả ALU</strong> so với hai đơn vị riêng, và
+   phần tiết kiệm ở bộ ghép kênh (96,34 µm²) <strong>lớn hơn</strong> phần tiết kiệm ở bộ số học
+   (57,56 µm²).</li>
+<li><strong>Đường tới hạn xuất phát từ bit chọn phép</strong>, không từ toán hạng: <code>op[2] → zflag</code>
+   1,85 ns so với <code>a[0] → cflag</code> 1,04 ns.</li>
+<li>Rủi ro chốt của Charter mục 10 đã được <strong>dựng lại và đo</strong>: chốt chỉ xuất hiện khi mất
+   <strong>cả hai</strong> lớp phòng vệ, và <code>always_comb</code> biến lỗi đó thành lỗi dừng biên dịch.</li>
+</ol>
+<h3 id="chua-chung-minh">Chưa chứng minh</h3>
+<ol>
+<li>Netlist tương đương RTL về chức năng — cần mô phỏng gate-level.</li>
+<li>Độ trễ <strong>thật sau routing</strong> — 1,85 ns chưa tính ký sinh dây.</li>
+<li>Biên an toàn qua các góc PVT — mới chạy <code>tt_025C_1v80</code>.</li>
+<li>Công suất thật của ứng dụng — 1,56e-05 W dùng activity mặc định, không lấy từ VCD.</li>
+<li><strong>Chi phí công suất của kiến trúc "tính hết rồi chọn"</strong> — biết chắc về mặt cấu trúc là
+   cả tám nhánh đều chuyển mạch, nhưng <strong>chưa đo</strong> được bằng bao nhiêu.</li>
+<li>Độ lớn và độ dài của vùng glitch khi <code>op</code> đổi — cần mô phỏng có SDF.</li>
+<li>Layout tuân thủ quy tắc chế tạo (DRC), khớp netlist (LVS), và có file GDSII.</li>
+<li>Tỉ lệ 46,4 % có giữ ở độ rộng từ khác hay không — chỉ đo ở 4 bit.</li>
+</ol>
+<h3 id="ngoai-pham-vi-khong-duoc-khang-dinh">Ngoài phạm vi — không được khẳng định</h3>
+<p>"Đã sign-off", "đã tape-out", "đã chế tạo", "đã kiểm tra sau chế tạo", "chạy được ở XXX MHz".
+Charter mục 3 loại tất cả khỏi phạm vi đề tài, cùng với nhân, chia, dịch nhiều bit trong
+một chu kỳ, và cờ tràn có dấu.</p>
+<hr>
+<p><em>Phiên bản: v2.0 (viết lại cho đúng đề Charter) · Ngày: 2026-09-24</em></p>
+</main>
+<footer class="doc">
+  Tài liệu sinh từ <code>implementation-notes_A04.md</code>.
+  Mọi số liệu đều kèm công cụ, phiên bản và lệnh tái lập trong
+  <code>07_TRACEABILITY/evidence_index.md</code>.
+</footer>
+</div>
+<script>
+(function(){
+  var b=document.createElement('button');
+  b.className='themebtn'; b.type='button';
+  function lbl(){var t=document.documentElement.getAttribute('data-theme');
+    return t==='dark'?'Nen sang':(t==='light'?'Nen toi':'Doi nen');}
+  b.textContent=lbl();
+  try{var s=localStorage.getItem('rtl2gds-theme'); if(s)document.documentElement.setAttribute('data-theme',s);}catch(e){}
+  b.textContent=lbl();
+  b.addEventListener('click',function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var mq=window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=cur?(cur==='dark'?'light':'dark'):(mq?'light':'dark');
+    document.documentElement.setAttribute('data-theme',next);
+    try{localStorage.setItem('rtl2gds-theme',next);}catch(e){}
+    b.textContent=lbl();
+  });
+  document.body.appendChild(b);
+})();
+</script>
+</body>
+</html>
