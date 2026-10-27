@@ -1,0 +1,27 @@
+
+name: A04 ALU4 - Check Project
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check RTL file
+        run: test -f 04_IMPLEMENTATION/rtl/a04_alu4.sv
+
+      - name: Check LibreLane config
+        run: test -f 04_IMPLEMENTATION/scripts/config_librelane.json
+
+      - name: Report success
+        run: echo "Project files found successfully"
